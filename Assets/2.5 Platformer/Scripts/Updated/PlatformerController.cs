@@ -115,7 +115,7 @@ public class PlatformerController : MonoBehaviour
         }
 
         // Jump
-        if (jumpPressed && !jumped)
+        if (jumpPressed && !jumped && Grounded)
         {
             jumped = true;
             movement.y = jumpForce;
@@ -136,8 +136,8 @@ public class PlatformerController : MonoBehaviour
             if (movement.z != 0) isFacingRight = movement.z > 0;
         }
 
-        if (isFacingRight) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, 0f, 0f), rotateSpeed * Time.deltaTime);
-        else transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, -180, 0f), rotateSpeed * Time.deltaTime);
+        if (isFacingRight) animator.transform.rotation = Quaternion.Slerp(animator.transform.rotation, Quaternion.Euler(0f, 0f, 0f), rotateSpeed * Time.deltaTime);
+        else animator.transform.rotation = Quaternion.Slerp(animator.transform.rotation, Quaternion.Euler(0f, -180, 0f), rotateSpeed * Time.deltaTime);
     }
 
     private void LedgeCheck()
