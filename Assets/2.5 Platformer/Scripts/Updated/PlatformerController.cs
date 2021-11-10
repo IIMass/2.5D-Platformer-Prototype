@@ -118,6 +118,7 @@ public class PlatformerController : MonoBehaviour
             movement.y = jumpForce;
 
             animator.SetTrigger("Jump");
+            animator.SetBool("Jumped", jumped);
         }
 
         movement.y = Mathf.Clamp(movement.y, -maxFallSpeed, jumpForce);
@@ -213,6 +214,7 @@ public class PlatformerController : MonoBehaviour
         if (grounded)
         {
             jumped = false;
+            animator.SetBool("Jumped", jumped);
         }
         else
         {
