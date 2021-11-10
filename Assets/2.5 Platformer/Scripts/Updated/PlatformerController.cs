@@ -74,13 +74,10 @@ public class PlatformerController : MonoBehaviour
         UpdateInputs();
         Movement();
         RotateCharacter();
+        LedgeCheck();
         LedgeStartClimb();
 
         UpdateAnimatorValues();
-    }
-    private void FixedUpdate()
-    {
-        LedgeCheck();
     }
 
     private void UpdateInputs()
@@ -180,6 +177,7 @@ public class PlatformerController : MonoBehaviour
             transform.position.y - (ledgeRaysLength.y + ledgeVerticalOffsets.y + ledgeGrabOffsets.y),
             horHit.point.z - (isFacingRight ? 1 : -1) * (ledgeRaysLength.x - ledgeGrabOffsets.x));
 
+        transform.parent = verHit.transform;
 
         animator.SetTrigger("OnLedge");     // Triggers the Ledge Grab animation
         animator.SetFloat("Speed", 0f);     // Resets the movement speed animator value
@@ -196,6 +194,8 @@ public class PlatformerController : MonoBehaviour
     }
     public void LedgeClimb()
     {
+        transform.parent = null;
+
         // Moves the character controller to an approximate position.
         // Z offset is applied differently taking into account the direction the controller is facing
         transform.position = new Vector3
