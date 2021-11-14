@@ -1654,6 +1654,50 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 210409835}
   m_Mesh: {fileID: 7449339982671619617, guid: 6a5e9483a86584d698a9c0c727b19e8c, type: 3}
+--- !u!1 &223759744
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 223759746}
+  - component: {fileID: 223759745}
+  m_Layer: 0
+  m_Name: LadderTravelBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &223759745
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223759744}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 3.3781357, z: 1}
+  m_Center: {x: 0, y: -1.9657555, z: 0}
+--- !u!4 &223759746
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223759744}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.02, y: 3.79, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2067687824}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &226842041
 GameObject:
   m_ObjectHideFlags: 0
@@ -4112,7 +4156,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1014035400}
   m_Layer: 0
-  m_Name: GameObject (1)
+  m_Name: UpwardsLadderTP
   m_TagString: Untagged
   m_Icon: {fileID: 3306451490063965843, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -4126,11 +4170,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1014035399}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.5, y: 8.2, z: -0}
+  m_LocalPosition: {x: -1.5, y: 8.176, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 2067687824}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1022074302
 GameObject:
@@ -5433,7 +5477,7 @@ MonoBehaviour:
   isLedgeClimbing: 0
   isLadderNear: 0
   isLadderClimbing: 0
-  endClimbLadder: 0
+  isLadderFinishingClimb: 0
   animatorSpeedFloat: Speed
   animatorGroundedBool: Grounded
   animatorJumpedBool: Jumped
@@ -5443,6 +5487,7 @@ MonoBehaviour:
   animatorLedgeGrabTrigger: LedgeGrab
   animatorLedgeClimbTrigger: LedgeClimb
   animatorLadderGrabTrigger: LadderGrab
+  animatorLadderClimbTrigger: LadderClimb
   walkSpeed: 12
   walkAcceleration: 60
   walkDecceleration: 70
@@ -6084,36 +6129,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1851385520}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1489654634
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1489654635}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 3306451490063965843, guid: 0000000000000000d000000000000000, type: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1489654635
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1489654634}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.87, y: 0.2, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 2067687824}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1498103112 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3367156037655330773, guid: 6ff37ce094ef63145a0a8a5a0cc23c88,
@@ -6569,8 +6584,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e97531a97b770b041b25e015208ed4d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upEnd: {fileID: 0}
-  downEnd: {fileID: 0}
+  upwardTP: {fileID: 0}
+  ladderTrigger: {fileID: 0}
+  ladderTravelBounds: {fileID: 0}
 --- !u!65 &1559881222
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8056,8 +8072,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e97531a97b770b041b25e015208ed4d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upEnd: {fileID: 0}
-  downEnd: {fileID: 0}
+  upwardTP: {fileID: 1014035400}
+  ladderTrigger: {fileID: 2067687821}
+  ladderTravelBounds: {fileID: 223759745}
 --- !u!65 &2067687821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8069,14 +8086,27 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 2.1121435, y: 9, z: 1.3}
-  m_Center: {x: 0.8560717, y: 4.5, z: 2.0453406e-15}
+  m_Size: {x: 3.3287878, y: 9.503685, z: 1.3}
+  m_Center: {x: 0.8762971, y: 4.7518425, z: 1.7579203e-15}
 --- !u!4 &2067687824 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 2aebb1059fde766448a8a11e6b1d1fe7,
     type: 3}
   m_PrefabInstance: {fileID: 1006573431}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &2067687825
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2067687819}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.5362694, y: 3.220398, z: 1.3}
+  m_Center: {x: -0.538143, y: 10.095184, z: 5.4204603e-16}
 --- !u!1 &2084818462
 GameObject:
   m_ObjectHideFlags: 0

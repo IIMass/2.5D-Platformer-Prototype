@@ -49,7 +49,7 @@ public class PlatformerController : MonoBehaviour
     // Ladder related booleans
     [SerializeField] private bool isLadderNear;
     [SerializeField] private bool isLadderClimbing;
-    [SerializeField] private bool endClimbLadder;
+    [SerializeField] private bool isLadderFinishingClimb;
     #endregion
 
     #region Animator Values
@@ -63,6 +63,7 @@ public class PlatformerController : MonoBehaviour
     [SerializeField] private string animatorLedgeGrabTrigger;
     [SerializeField] private string animatorLedgeClimbTrigger;
     [SerializeField] private string animatorLadderGrabTrigger;
+    [SerializeField] private string animatorLadderClimbTrigger;
 
     private int animatorSpeedFloatHash;
     private int animatorGroundedBoolHash;
@@ -73,6 +74,7 @@ public class PlatformerController : MonoBehaviour
     private int animatorLedgeGrabTriggerHash;
     private int animatorLedgeClimbTriggerHash;
     private int animatorLadderGrabTriggerHash;
+    private int animatorLadderClimbTriggerHash;
     #endregion
 
     #region Horizontal Movement
@@ -144,6 +146,7 @@ public class PlatformerController : MonoBehaviour
         animatorLedgeGrabTriggerHash = Animator.StringToHash(animatorLedgeGrabTrigger); ;
         animatorLedgeClimbTriggerHash = Animator.StringToHash(animatorLedgeClimbTrigger); ;
         animatorLadderGrabTriggerHash = Animator.StringToHash(animatorLadderGrabTrigger); ;
+        animatorLadderClimbTriggerHash = Animator.StringToHash(animatorLadderClimbTrigger); ;
     }
 
 
@@ -388,7 +391,6 @@ public class PlatformerController : MonoBehaviour
         ladderNear = ladder;
         isLadderNear = near;
     }
-
     private void LadderCheck()
     {
         if (onLedge) return;
@@ -405,12 +407,21 @@ public class PlatformerController : MonoBehaviour
 
             controller.enabled = false;
 
-            isFacingRight = transform.position.z <= ladderToClimb.transform.position.z;
+            isFacingRight = ladderToClimb.GetLadderTravelBounds().transform.position.z <= ladderToClimb.transform.position.z;
 
-            transform.position = new Vector3
-                (transform.position.x,
-                transform.position.y,
-                ladderToClimb.GetLadderTrigger().bounds.center.z);
+            Vector3 ladderPos = new Vector3(transform.position.x, transform.position.y, ladderToClimb.GetLadderTravelBounds().bounds.center.z);
+            if (transform.position.y >= ladderToClimb.GetLadderTravelBounds().bounds.max.y)
+            {
+                ladderPos.y = ladderToClimb.GetLadderTravelBounds().bounds.max.y;
+            }
+            else if (transform.position.y < ladderToClimb.GetLadderTravelBounds().bounds.min.y)
+            {
+                ladderPos.y = ladderToClimb.GetLadderTravelBounds().bounds.min.y;
+            }
+
+
+            transform.position = ladderPos;
+
 
             controller.enabled = true;
 
@@ -421,6 +432,8 @@ public class PlatformerController : MonoBehaviour
 
     private void OnLadderState()
     {
+        if (isLadderFinishingClimb || ladderToClimb == null) return;
+
         // Vertical movement is only allowed
         controller.Move(Vector3.up * ladderClimbSpeed * moveInput.y * Time.deltaTime);
 
@@ -439,17 +452,33 @@ public class PlatformerController : MonoBehaviour
             return;
         }
 
+        // If the Controller touches the ground or the ladder is no longer near it, end climb
         if (Grounded || !isLadderNear)
         {
             LadderEndClimb();
+            return;
+        }
+
+        // If the controller leaves travel max Y bounds, trigger climb animation
+        if (!Grounded && isLadderNear && transform.position.y > ladderToClimb.GetLadderTravelBounds().bounds.max.y)
+        {
+            isLadderFinishingClimb = true;
+            animator.SetTrigger(animatorLadderClimbTriggerHash);
             return;
         }
     }
 
     private void LadderEndClimb()
     {
+        ladderToClimb = null;
         isLadderClimbing = false;
         animator.SetBool(animatorOnLadderBoolHash, isLadderClimbing);
+    }
+    public void LadderEndClimbAnimation()
+    {
+        transform.position = ladderToClimb.GetLadderUpEnd().position;
+        isLadderFinishingClimb = false;
+        LadderEndClimb();
     }
     #endregion
 

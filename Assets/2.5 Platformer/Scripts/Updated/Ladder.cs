@@ -2,15 +2,10 @@
 
 public class Ladder : MonoBehaviour
 {
-    [SerializeField] private Transform upEnd;
-    [SerializeField] private Transform downEnd;
+    [SerializeField] private Transform upwardTP;
 
-    private Collider ladderTrigger;
-
-    private void Start()
-    {
-        ladderTrigger = GetComponent<Collider>();
-    }
+    [SerializeField] private Collider ladderTrigger;
+    [SerializeField] private Collider ladderTravelBounds;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -19,7 +14,6 @@ public class Ladder : MonoBehaviour
             controller.LadderNearAssign(this, true);
         }
     }
-
     private void OnTriggerExit(Collider other)
     {
         if (other.TryGetComponent(out PlatformerController controller))
@@ -32,12 +26,12 @@ public class Ladder : MonoBehaviour
     {
         return ladderTrigger;
     }
+    public Collider GetLadderTravelBounds()
+    {
+        return ladderTravelBounds;
+    }
     public Transform GetLadderUpEnd()
     {
-        return upEnd;
-    }
-    public Transform GetLadderDownEnd()
-    {
-        return downEnd;
+        return upwardTP;
     }
 }
