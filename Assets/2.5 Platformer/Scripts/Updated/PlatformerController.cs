@@ -13,6 +13,7 @@ public class PlatformerController : MonoBehaviour
     [Header("Inputs")]
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool spacePressed;
+    [SerializeField] private bool shiftPressed;
     [SerializeField] private bool ePressed;
     #endregion
 
@@ -20,7 +21,7 @@ public class PlatformerController : MonoBehaviour
     [Header("States")]
     // Similar to a FSM, I switch behaviours from state to state to allow for better code structure
     [SerializeField] private ControllerStates currentControllerState;
-    private enum ControllerStates { Grounded, InAir, OnLedge, OnLadder }
+    private enum ControllerStates { Grounded, InAir, OnLedge, OnLadder, Rolling }
 
     // This is used to rotate the character and use raycasts in the right directions
     [SerializeField] private bool isFacingRight = true;
@@ -50,6 +51,9 @@ public class PlatformerController : MonoBehaviour
     [SerializeField] private bool isLadderNear;
     [SerializeField] private bool isLadderClimbing;
     [SerializeField] private bool isLadderFinishingClimb;
+
+    // Roll related booleans
+    [SerializeField] private bool isRolling;
     #endregion
 
     #region Animator Values
@@ -59,22 +63,26 @@ public class PlatformerController : MonoBehaviour
     [SerializeField] private string animatorJumpedBool;
     [SerializeField] private string animatorOnLedgeBool;
     [SerializeField] private string animatorOnLadderBool;
+    [SerializeField] private string animatorRollingBool;
     [SerializeField] private string animatorJumpTrigger;
     [SerializeField] private string animatorLedgeGrabTrigger;
     [SerializeField] private string animatorLedgeClimbTrigger;
     [SerializeField] private string animatorLadderGrabTrigger;
     [SerializeField] private string animatorLadderClimbTrigger;
+    [SerializeField] private string animatorRollTrigger;
 
     private int animatorSpeedFloatHash;
     private int animatorGroundedBoolHash;
     private int animatorJumpedBoolHash;
     private int animatorOnLedgeBoolHash;
     private int animatorOnLadderBoolHash;
+    private int animatoranimatorRollingBoolHash;
     private int animatorJumpTriggerHash;
     private int animatorLedgeGrabTriggerHash;
     private int animatorLedgeClimbTriggerHash;
     private int animatorLadderGrabTriggerHash;
     private int animatorLadderClimbTriggerHash;
+    private int animatorRollTriggerHash;
     #endregion
 
     #region Horizontal Movement
@@ -126,7 +134,14 @@ public class PlatformerController : MonoBehaviour
     [SerializeField] private Ladder ladderToClimb;
     #endregion
 
-    // [Header("Roll")]
+    #region Roll
+    [Header("Roll")]
+    [SerializeField] private float rollSpeed;
+    [SerializeField] private float rollControllerHeight;
+    [SerializeField] private float rollControllerOriginalHeight;
+
+    private bool rolledFacingRight;
+    #endregion
     #endregion
 
     private void Start()
@@ -137,16 +152,20 @@ public class PlatformerController : MonoBehaviour
     // Gets the hash of the controller's animations to optimize Animator's overhead
     private void AnimationHash()
     {
-        animatorSpeedFloatHash = Animator.StringToHash(animatorSpeedFloat);
-        animatorGroundedBoolHash = Animator.StringToHash(animatorGroundedBool); ;
-        animatorJumpedBoolHash = Animator.StringToHash(animatorJumpedBool); ;
-        animatorOnLedgeBoolHash = Animator.StringToHash(animatorOnLedgeBool); ;
-        animatorOnLadderBoolHash = Animator.StringToHash(animatorOnLadderBool); ;
-        animatorJumpTriggerHash = Animator.StringToHash(animatorJumpTrigger); ;
-        animatorLedgeGrabTriggerHash = Animator.StringToHash(animatorLedgeGrabTrigger); ;
-        animatorLedgeClimbTriggerHash = Animator.StringToHash(animatorLedgeClimbTrigger); ;
-        animatorLadderGrabTriggerHash = Animator.StringToHash(animatorLadderGrabTrigger); ;
-        animatorLadderClimbTriggerHash = Animator.StringToHash(animatorLadderClimbTrigger); ;
+        animatorSpeedFloatHash          = Animator.StringToHash(animatorSpeedFloat);
+
+        animatorGroundedBoolHash        = Animator.StringToHash(animatorGroundedBool);
+        animatorJumpedBoolHash          = Animator.StringToHash(animatorJumpedBool);
+        animatorOnLedgeBoolHash         = Animator.StringToHash(animatorOnLedgeBool);
+        animatorOnLadderBoolHash        = Animator.StringToHash(animatorOnLadderBool);
+        animatoranimatorRollingBoolHash = Animator.StringToHash(animatorRollingBool);
+
+        animatorJumpTriggerHash         = Animator.StringToHash(animatorJumpTrigger);
+        animatorLedgeGrabTriggerHash    = Animator.StringToHash(animatorLedgeGrabTrigger);
+        animatorLedgeClimbTriggerHash   = Animator.StringToHash(animatorLedgeClimbTrigger);
+        animatorLadderGrabTriggerHash   = Animator.StringToHash(animatorLadderGrabTrigger);
+        animatorLadderClimbTriggerHash  = Animator.StringToHash(animatorLadderClimbTrigger);
+        animatorRollTriggerHash         = Animator.StringToHash(animatorRollTrigger);
     }
 
 
@@ -165,6 +184,7 @@ public class PlatformerController : MonoBehaviour
     {
         moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         spacePressed = Input.GetKeyDown(KeyCode.Space);
+        shiftPressed = Input.GetKeyDown(KeyCode.LeftShift);
         ePressed = Input.GetKeyDown(KeyCode.E);
     }
 
@@ -175,6 +195,7 @@ public class PlatformerController : MonoBehaviour
         {
             case ControllerStates.Grounded:
                 GroundedState();
+                RollStart();
                 GroundCheck();
                 LadderCheck();
                 break;
@@ -192,6 +213,11 @@ public class PlatformerController : MonoBehaviour
 
             case ControllerStates.OnLadder:
                 OnLadderState();
+                GroundCheck();
+                break;
+
+            case ControllerStates.Rolling:
+                RollState();
                 GroundCheck();
                 break;
         }
@@ -216,6 +242,10 @@ public class PlatformerController : MonoBehaviour
 
             case ControllerStates.OnLadder:
                 if (!isLadderClimbing) currentControllerState = (Grounded) ? ControllerStates.Grounded : ControllerStates.InAir;
+                break;
+
+            case ControllerStates.Rolling:
+                if (!isRolling) currentControllerState = (Grounded) ? ControllerStates.Grounded : ControllerStates.InAir;
                 break;
         }
     }
@@ -480,6 +510,46 @@ public class PlatformerController : MonoBehaviour
         isLadderFinishingClimb = false;
         LadderEndClimb();
     }
+    #endregion
+
+    #region Roll Methods
+    private void RollStart()
+    {
+        if (shiftPressed)
+        {
+            currentControllerState = ControllerStates.Rolling;
+            isRolling = true;
+
+            animator.SetTrigger(animatorRollTriggerHash);
+            animator.SetBool(animatoranimatorRollingBoolHash, isRolling);
+
+            rolledFacingRight = isFacingRight;
+            controller.height = rollControllerHeight;
+
+            controller.center = Vector3.up * (controller.height / 2f);
+        }
+    }
+
+    private void RollState()
+    {
+        movement.z = rollSpeed * (rolledFacingRight ? 1 : -1);
+
+        if (Grounded) movement.y = -gravityForce;
+        else movement.y = (movement.y >= 0) ? movement.y - gravityForce * Time.deltaTime : movement.y - gravityForce * gravityFallMultiplier * Time.deltaTime;
+
+        Move();
+    }
+
+    public void RollEnd()
+    {
+        isRolling = false;
+        animator.SetBool(animatoranimatorRollingBoolHash, isRolling);
+
+        controller.height = rollControllerOriginalHeight;
+        controller.center = Vector3.up * (controller.height / 2f);
+    }
+
+
     #endregion
 
     private void UpdateAnimatorValues()
