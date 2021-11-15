@@ -144,11 +144,26 @@ public class PlatformerController : MonoBehaviour
     #endregion
     #endregion
 
+
+    #region MonoBehaviour Methods
+    // Start is called before the first frame update
     private void Start()
     {
         AnimationHash();
     }
 
+    // Update is called once per frame
+    private void Update()
+    {
+        UpdateInputs();
+        StateUpdate();
+        StateChange();
+        RotateCharacter();
+        UpdateAnimatorValues();
+    }
+    #endregion
+
+    #region Custom Methods
     // Gets the hash of the controller's animations to optimize Animator's overhead
     private void AnimationHash()
     {
@@ -169,16 +184,6 @@ public class PlatformerController : MonoBehaviour
     }
 
 
-    // Update is called once per frame
-    private void Update()
-    {
-        UpdateInputs();
-        StateUpdate();
-        StateChange();
-        RotateCharacter();
-        UpdateAnimatorValues();
-    }
-
     // Check for player inputs every frame
     private void UpdateInputs()
     {
@@ -186,6 +191,19 @@ public class PlatformerController : MonoBehaviour
         spacePressed = Input.GetKeyDown(KeyCode.Space);
         shiftPressed = Input.GetKeyDown(KeyCode.LeftShift);
         ePressed = Input.GetKeyDown(KeyCode.E);
+    }
+
+    // Updates Speed and Ground animator values
+    private void UpdateAnimatorValues()
+    {
+        animator.SetFloat(animatorSpeedFloatHash, controller.velocity.magnitude);
+        animator.SetBool(animatorGroundedBoolHash, controller.isGrounded);
+    }
+
+    // Updates local Grounded variable
+    private void GroundCheck()
+    {
+        Grounded = controller.isGrounded;
     }
 
     // Executes the current state's behaviour
@@ -250,11 +268,6 @@ public class PlatformerController : MonoBehaviour
         }
     }
 
-    // Updates local Grounded variable
-    private void GroundCheck()
-    {
-        Grounded = controller.isGrounded;
-    }
 
     #region Movement Methods
     private void OnGroundStateChange(bool grounded)
@@ -391,6 +404,8 @@ public class PlatformerController : MonoBehaviour
             animator.SetTrigger(animatorLedgeClimbTriggerHash);     // Trigger the Climb animation
         }
     }
+
+    // Called through LedgeClimbBehaviour OnStateExit
     public void LedgeClimb()
     {
         // Unparent the Controller
@@ -398,10 +413,7 @@ public class PlatformerController : MonoBehaviour
 
         // Moves the character controller to an approximate position.
         // Z offset is applied differently taking into account the direction the controller is facing
-        transform.position = new Vector3
-            (transform.position.x,
-            transform.position.y + ledgeClimbOffset.y,
-            transform.position.z + (isFacingRight ? 1 : -1) * ledgeClimbOffset.z);
+        transform.position = new Vector3(transform.position.x, transform.position.y + ledgeClimbOffset.y, transform.position.z + (isFacingRight ? 1 : -1) * ledgeClimbOffset.z);
 
         // The controller has stopped climbing and is no longer on the ledge.
         onLedge = false;
@@ -416,30 +428,42 @@ public class PlatformerController : MonoBehaviour
     #endregion
 
     #region Ladder Methods
+    // Stores temporarily the nearby ladder
     public void LadderNearAssign(Ladder ladder, bool near)
     {
         ladderNear = ladder;
         isLadderNear = near;
     }
+
     private void LadderCheck()
     {
+        // If is on Ledge, stop checking for ladders
         if (onLedge) return;
 
+        // If the player pressed E and is Near a ladder...
         if (ePressed && isLadderNear)
         {
+            // Switch current controller state to OnLadder
             currentControllerState = ControllerStates.OnLadder;
 
+            // Set ladder to climb to the nearby ladder
             ladderToClimb = ladderNear;
-            isLadderClimbing = true;
-            Grounded = false;
-            jumped = false;
-            movement = Vector3.zero;
 
-            controller.enabled = false;
+            controller.enabled = false; // Disable controller to move it through transform.position
+            isLadderClimbing = true;    // Controller is now ladder climbing
+            Grounded = false;           // Reset Ground state
+            movement = Vector3.zero;    // Reset Movement values           
 
+            JumpReset();
+
+            // Face towards the ladder
             isFacingRight = ladderToClimb.GetLadderTravelBounds().transform.position.z <= ladderToClimb.transform.position.z;
 
+            // Position to Move the controller near the ladder
+            // Adjusts controller Z position to the middle of the Ladder Travel Bounds
             Vector3 ladderPos = new Vector3(transform.position.x, transform.position.y, ladderToClimb.GetLadderTravelBounds().bounds.center.z);
+
+            // Adjusts controller Y position to the Ladder Travel Bounds
             if (transform.position.y >= ladderToClimb.GetLadderTravelBounds().bounds.max.y)
             {
                 ladderPos.y = ladderToClimb.GetLadderTravelBounds().bounds.max.y;
@@ -449,19 +473,17 @@ public class PlatformerController : MonoBehaviour
                 ladderPos.y = ladderToClimb.GetLadderTravelBounds().bounds.min.y;
             }
 
-
+            // Move controller to ladderPoss
             transform.position = ladderPos;
-
-
             controller.enabled = true;
 
-            animator.SetTrigger(animatorLadderGrabTriggerHash);
-            animator.SetBool(animatorOnLadderBoolHash, isLadderClimbing);
+            animator.SetTrigger(animatorLadderGrabTriggerHash);             // Triggers the Ladder Grab animation
+            animator.SetBool(animatorOnLadderBoolHash, isLadderClimbing);   // Updates OnLadder Animator boolean
         }
     }
-
     private void OnLadderState()
     {
+        // If the controller is finishing the climb, or has no reference to a ladder to climb, stop executing here
         if (isLadderFinishingClimb || ladderToClimb == null) return;
 
         // Vertical movement is only allowed
@@ -497,13 +519,14 @@ public class PlatformerController : MonoBehaviour
             return;
         }
     }
-
     private void LadderEndClimb()
     {
         ladderToClimb = null;
         isLadderClimbing = false;
         animator.SetBool(animatorOnLadderBoolHash, isLadderClimbing);
     }
+
+    // Called through LadderClimbBehaviour OnStateExit
     public void LadderEndClimbAnimation()
     {
         transform.position = ladderToClimb.GetLadderUpEnd().position;
@@ -515,46 +538,45 @@ public class PlatformerController : MonoBehaviour
     #region Roll Methods
     private void RollStart()
     {
+        // If the player has pressed LeftShift...
         if (shiftPressed)
         {
+            // Switch current controller state to Rolling
             currentControllerState = ControllerStates.Rolling;
+
             isRolling = true;
+            rolledFacingRight = isFacingRight;  // Stores the controller's direction
 
-            animator.SetTrigger(animatorRollTriggerHash);
-            animator.SetBool(animatoranimatorRollingBoolHash, isRolling);
+            controller.height = rollControllerHeight;                       // Sets controller height to a smaller value to allow rolling through narrow spaces
+            controller.center = Vector3.up * (controller.height / 2f);      // Adjusts center of the controller to avoid sinking the character model to the ground
 
-            rolledFacingRight = isFacingRight;
-            controller.height = rollControllerHeight;
-
-            controller.center = Vector3.up * (controller.height / 2f);
+            animator.SetTrigger(animatorRollTriggerHash);                   // Triggers the Roll animation
+            animator.SetBool(animatoranimatorRollingBoolHash, isRolling);   // Updates Rolling Animator boolean
         }
     }
 
     private void RollState()
     {
+        // Move with rollSpeed towards the direction the controller is facing
         movement.z = rollSpeed * (rolledFacingRight ? 1 : -1);
 
+        // Gravity
         if (Grounded) movement.y = -gravityForce;
         else movement.y = (movement.y >= 0) ? movement.y - gravityForce * Time.deltaTime : movement.y - gravityForce * gravityFallMultiplier * Time.deltaTime;
 
         Move();
     }
 
+    // Called through RollBehaviour OnStateExit
     public void RollEnd()
     {
+        // Controller is no longer rolling
         isRolling = false;
         animator.SetBool(animatoranimatorRollingBoolHash, isRolling);
 
-        controller.height = rollControllerOriginalHeight;
-        controller.center = Vector3.up * (controller.height / 2f);
+        controller.height = rollControllerOriginalHeight;           // Sets controller height back to the original value
+        controller.center = Vector3.up * (controller.height / 2f);  // Restores original controller center
     }
-
-
     #endregion
-
-    private void UpdateAnimatorValues()
-    {
-        animator.SetFloat(animatorSpeedFloatHash, controller.velocity.magnitude);
-        animator.SetBool(animatorGroundedBoolHash, controller.isGrounded);
-    }
+    #endregion
 }

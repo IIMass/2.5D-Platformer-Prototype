@@ -16,6 +16,7 @@ public class Collectable : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Sine movement
         transform.position = startPos + Vector3.up * Mathf.Sin(Time.time * moveSinFrequency) * moveSinAmplitude;
         transform.Rotate(0f, rotateSpeed * Time.deltaTime, 0f);
     }
