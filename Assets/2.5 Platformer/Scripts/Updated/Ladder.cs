@@ -11,14 +11,14 @@ public class Ladder : MonoBehaviour
     {
         if (other.TryGetComponent(out PlatformerController controller))
         {
-            controller.LadderNearAssign(this, true);
+            controller.LadderNearAssign(this);
         }
     }
     private void OnTriggerExit(Collider other)
     {
         if (other.TryGetComponent(out PlatformerController controller))
         {
-            controller.LadderNearAssign(this, false);
+            controller.LadderNearAssign(null);
         }
     }
 

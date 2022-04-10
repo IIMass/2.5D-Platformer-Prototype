@@ -48,7 +48,6 @@ public class PlatformerController : MonoBehaviour
     [SerializeField] private bool isLedgeClimbing;
 
     // Ladder related booleans
-    [SerializeField] private bool isLadderNear;
     [SerializeField] private bool isLadderClimbing;
     [SerializeField] private bool isLadderFinishingClimb;
 
@@ -429,10 +428,9 @@ public class PlatformerController : MonoBehaviour
 
     #region Ladder Methods
     // Stores temporarily the nearby ladder
-    public void LadderNearAssign(Ladder ladder, bool near)
+    public void LadderNearAssign(Ladder ladder)
     {
         ladderNear = ladder;
-        isLadderNear = near;
     }
 
     private void LadderCheck()
@@ -441,7 +439,7 @@ public class PlatformerController : MonoBehaviour
         if (onLedge) return;
 
         // If the player pressed E and is Near a ladder...
-        if (ePressed && isLadderNear)
+        if (ePressed && ladderNear != null)
         {
             // Switch current controller state to OnLadder
             currentControllerState = ControllerStates.OnLadder;
@@ -505,14 +503,14 @@ public class PlatformerController : MonoBehaviour
         }
 
         // If the Controller touches the ground or the ladder is no longer near it, end climb
-        if (Grounded || !isLadderNear)
+        if (Grounded || ladderNear == null)
         {
             LadderEndClimb();
             return;
         }
 
         // If the controller leaves travel max Y bounds, trigger climb animation
-        if (!Grounded && isLadderNear && transform.position.y > ladderToClimb.GetLadderTravelBounds().bounds.max.y)
+        if (!Grounded && ladderNear != null && transform.position.y > ladderToClimb.GetLadderTravelBounds().bounds.max.y)
         {
             isLadderFinishingClimb = true;
             animator.SetTrigger(animatorLadderClimbTriggerHash);
@@ -531,6 +529,7 @@ public class PlatformerController : MonoBehaviour
     {
         transform.position = ladderToClimb.GetLadderUpEnd().position;
         isLadderFinishingClimb = false;
+        GroundCheck();
         LadderEndClimb();
     }
     #endregion
